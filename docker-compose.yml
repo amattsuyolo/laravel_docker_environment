@@ -1,0 +1,99 @@
+version: '3.5'
+
+services:
+  nginx:
+    container_name: nginx_local
+    build:
+      context: .
+      dockerfile: nginx.dockerfile
+    ports:
+      - 8080:80
+      - 443:443
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - mysql
+      - php
+      - redis
+    restart: unless-stopped
+    tty: true
+    networks:
+      - app-net-api
+      - laravel
+  mysql:
+    container_name: mysql_local
+    image: mysql:5.7
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./mysql:/var/lib/mysql
+    networks:
+      - app-net-api
+      - laravel
+  php:
+    container_name: php_local
+    build:
+      context: .
+      dockerfile: php.dockerfile
+    volumes:
+      - ./src:/var/www/html
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    tty: true
+    networks:
+      - laravel
+      - app-net-api
+  composer:
+    container_name: composer_local
+    build:
+      context: .
+      dockerfile: composer.dockerfile
+    volumes:
+      - ./src:/var/www/html
+    working_dir: /var/www/html
+    networks:
+      - laravel
+      - app-net-api
+  npm:
+    container_name: npm_local
+    image: node:current-alpine
+    volumes:
+      - ./src:/var/www/html
+    entrypoint: [ "npm" ]
+    working_dir: /var/www/html
+  artisan:
+    container_name: artisan_local
+    build:
+      context: .
+      dockerfile: php.dockerfile
+    volumes:
+      - ./src:/var/www/html
+    working_dir: /var/www/html
+    depends_on:
+      - mysql
+    entrypoint: [ "php", "/var/www/html/artisan" ]
+    networks:
+      - laravel
+      - app-net-api
+  redis:
+    container_name: redis_local
+    image: redis:alpine
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "6379:6379"
+    networks:
+      - laravel
+      - app-net-api
+#Docker Networks
+networks:
+  laravel:
+  app-net-api:
+    driver: bridge
+    name: app-net-api
