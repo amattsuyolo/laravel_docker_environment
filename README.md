@@ -1,7 +1,7 @@
 # laravel_docker_environment
 
-##first
+## first
 manual touch mysql、php、nginx、mysql folder 
 
-##second
+## second
 pull laravel project into dir
